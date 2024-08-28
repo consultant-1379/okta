@@ -1,0 +1,502 @@
+{% extends 'utils/main.html' %}
+
+{% load mathfilters %}
+{% load cloud_stats_tags %}
+{% block content %}
+	<section class="content" ng-show="!transitioning" style="">
+		<section class="container">
+			<ui-view>
+			
+			<section>
+				<div class="page-header">
+					<h1>Cloud Stats</h1>
+				</div>
+				
+				<div class="container">
+			      <div class="tabbable tabs-left">
+			        <ul class="nav nav-tabs">
+			          <li class="active"><a href="#all-clouds-tab" data-toggle="tab">All Clouds</a></li>
+			          {% for cloud in clouds %} {% if not cloud.shared_cloud %}
+					  <li><a href="#{{cloud.cloud_name}}-tab" data-toggle="tab">{{cloud.cloud_name}}</a></li>
+					  {% endif %}{% endfor %}
+			        </ul>
+
+			        <div class="col-md-11">
+				        <div class="tab-content">
+				         <div class="tab-pane active" id="all-clouds-tab">
+				         	<div class="col-md-12">
+					            <div class="panel-group" id="accordion">
+					                <div class="panel panel-default">
+					                    <div class="panel-heading">
+					                        <h1 class="panel-title">
+					                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="glyphicon glyphicon-cloud">
+					                            </span> Cloud Charts</a>
+					                        </h1>
+					                    </div>
+					                    <div id="collapseOne" class="panel-collapse collapse in">
+					                        <div class="panel-body">
+												<div class="row">
+									         		<div class="col-md-2"></div>
+												    <div class="col-md-4" id="programs-total-cpu-allocation"></div>
+												    <div class="col-md-4" id="programs-total-ram-allocation"></div>
+												    <div class="col-md-2"></div>
+												</div>
+												
+												<div class="row">
+												    <div class="col-md-4" id="programs-all-clouds"></div>
+												    <div class="col-md-4" id="deployments-all-clouds"></div>
+												    <div class="col-md-4" id="ccd-count-all-clouds"></div>
+												</div>
+					                        </div>
+					                    </div>
+					                </div>
+					                <div class="panel panel-default">
+					                    <div class="panel-heading">
+					                        <h1 class="panel-title">
+					                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"><span class="glyphicon glyphicon-th-list">
+					                            </span> Decommissioned Projects</a>
+					                        </h1>
+					                    </div>
+					                    <div id="collapseTwo" class="panel-collapse collapse">
+					                        <div class="panel-body">
+					                            <div class="row">
+												    <div class="col-md-12">
+												    	<h2>Decommissioned Projects (Since {{returned_projects_info.returned_projects_timestamp}})</h2>
+														<table class="table table-striped table-condensed table-hover dataTable no-footer returnedProjects">
+															<thead>
+																<tr>
+																	<th>Cloud</th>
+																	<th>Project</th>
+																	<th>Program</th>
+																	<th>CPU</th>
+																	<th>RAM</th>
+																	<th>Storage</th> 
+																	<th>JIRA</th>
+																</tr>
+															</thead>
+																
+															<tbody>
+																{% for project in returned_projects_info.returned_projects %}
+																<tr>
+																	<td>{{ project.cloud_name }}</td>
+																	<td>{{ project.project_name }}</td>
+																	<td>{{ project.program }}</td>
+																	<td>{{ project.total_cpu }}</td>
+																	<td>{{ project.total_ram }}</td> 
+																	<td>{{ project.total_cinder_storage }}</td>
+																	<td>{{ project.description }}</td>
+																</tr>
+																{% endfor %}
+															</tbody>
+														</table>
+												    </div>
+												</div>
+					                        </div>
+					                    </div>
+					                </div>
+					                <div class="panel panel-default">
+					                    <div class="panel-heading">
+					                        <h1 class="panel-title">
+					                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree"><span class="glyphicon glyphicon-th-list">
+					                            </span> CCD Grafana Stats</a>
+					                        </h1> 
+					                    </div>
+					                    <div id="collapseThree" class="panel-collapse collapse">
+					                        <div class="panel-body">
+					                            <div class="row">
+												    <div class="col-md-12">
+												    	<iframe src="http://grafana.decni.athtem.eei.ericsson.se:3000/d/onwKILQGk/de-cni-managed-deployments-summary?orgId=1&refresh=30s&kiosk" width="100%" height="800"></iframe>
+												    </div> 
+												</div>
+					                        </div>
+					                    </div>
+					                </div>
+					            </div>
+					        </div>
+				         </div>
+				         
+				         {% for cloud in clouds %} {% if not cloud.shared_cloud %}
+						 <div class="tab-pane" id="{{cloud.cloud_name}}-tab">
+						 	<div class="col-md-12">
+					            <div class="panel-group" id="accordion">
+					                <div class="panel panel-default">
+					                    <div class="panel-heading">
+					                        <h1 class="panel-title">
+					                            <a data-toggle="collapse" data-parent="#accordion" href="#{{cloud.cloud_name}}-collapseOne"><span class="glyphicon glyphicon-cloud">
+					                            </span> Cloud Charts</a>
+					                        </h1>
+					                    </div>
+					                    <div id="{{cloud.cloud_name}}-collapseOne" class="panel-collapse collapse in">
+					                        <div class="panel-body">
+												<div class="row">
+												    <div class="col-md-4" id="program-cpu-allocation-{{ cloud.cloud_name }}"></div>
+												    <div class="col-md-4" id="program-ram-allocation-{{ cloud.cloud_name }}"></div>
+												    <div class="col-md-4" id="programs-{{ cloud.cloud_name }}"></div>
+												</div>
+												<div class="row">
+												    <div class="col-md-2"></div>
+												    <div class="col-md-4" id="deployments-{{ cloud.cloud_name }}"></div>
+												    <div class="col-md-4" id="venms-{{ cloud.cloud_name }}"></div>
+												    <div class="col-md-2"></div>
+												</div>
+					                        </div>
+					                    </div>
+					                </div>
+					                <div class="panel panel-default">
+					                    <div class="panel-heading">
+					                        <h1 class="panel-title">
+					                            <a data-toggle="collapse" data-parent="#accordion" href="#{{cloud.cloud_name}}-collapseTwo"><span class="glyphicon glyphicon-th-list">
+					                            </span> Decommissioned Projects</a>
+					                        </h1>
+					                    </div>
+					                    <div id="{{cloud.cloud_name}}-collapseTwo" class="panel-collapse collapse">
+					                        <div class="panel-body">
+					                            <div class="row">
+												    <div class="col-md-12">
+														{% if cloud.cloud_name|in:returned_projects_info.clouds %} 
+														<h2>Decommissioned Projects (Since {{returned_projects_info.returned_projects_timestamp}})</h2>
+														<table class="table table-striped table-condensed table-hover dataTable no-footer">
+															<thead>
+																<tr>
+																	<th>Project</th>
+																	<th>Program</th>
+																	<th>CPU</th>
+																	<th>RAM</th>
+																	<th>Storage</th> 
+																	<th>JIRA</th>
+																</tr>
+															</thead>
+																
+															<tbody>
+																{% for project in returned_projects_info.clouds|get_item:cloud.cloud_name %}
+																<tr>
+																	<td>{{ project.project_name }}</td>
+																	<td>{{ project.program }}</td>
+																	<td>{{ project.total_cpu }}</td>
+																	<td>{{ project.total_ram }}</td> 
+																	<td>{{ project.total_cinder_storage }}</td>
+																	<td>{{ project.description }}</td>
+																</tr>
+																{% endfor %}
+															</tbody>
+														</table>								
+														{% else %} 
+														<h2>No Decommissioned Projects Since {{ returned_projects_info.returned_projects_timestamp }}</h2>
+														{% endif %}
+													</div>
+												</div>
+					                        </div>
+					                    </div>
+					                </div>
+					            </div>
+					        </div>
+						</div>
+						{% endif %} {% endfor %}
+				        </div>
+			        </div>
+			      </div>
+				</div>
+				
+			</section>
+			</ui-view>
+		</section>
+	</section>
+
+{% endblock content %}
+
+{% block extrascripts %}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<style type="text/css">
+svg > g > g:last-child { pointer-events: none }
+
+.tabs-left > .nav-tabs {
+  border-bottom: 0;
+}
+
+.tab-content > .tab-pane,
+.pill-content > .pill-pane {
+  display: none;
+}
+
+.tab-content > .active,
+.pill-content > .active {
+  display: block;
+}
+
+.tabs-left > .nav-tabs > li {
+  float: none;
+}
+
+.tabs-left > .nav-tabs > li > a {
+  min-width: 70px;
+  margin-right: 0;
+}
+
+.tabs-left > .nav-tabs {
+  float: left;
+  margin-right: 19px;
+  border-right: 1px solid #ddd;
+}
+
+.tabs-left > .nav-tabs > li > a {
+  margin-right: -1px;
+  -webkit-border-radius: 4px 0 0 4px;
+     -moz-border-radius: 4px 0 0 4px;
+          border-radius: 4px 0 0 4px;
+}
+
+.tabs-left > .nav-tabs > li > a:hover,
+.tabs-left > .nav-tabs > li > a:focus {
+  border-color: #eeeeee #dddddd #eeeeee #eeeeee;
+}
+
+.tabs-left > .nav-tabs .active > a,
+.tabs-left > .nav-tabs .active > a:hover,
+.tabs-left > .nav-tabs .active > a:focus {
+  border-color: #ddd transparent #ddd #ddd;
+  *border-right-color: #ffffff;
+}
+</style>
+
+<script type="text/javascript">
+	google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+		{% for cloud,value in projects_breakdown.items %}
+		
+			if (document.getElementById('deployments-{{ cloud }}') != null){
+			
+			// Create the data table.
+		    var data = new google.visualization.DataTable();
+		    data.addColumn('string', 'Deployment Types');
+		    data.addColumn('number', 'Count');
+		    data.addRows([
+		      ['vENM', {{ value.deployment_count.enm_count }}],
+		      ['CCD', {{ value.deployment_count.ccd_count }}],
+		      ['VIMZONE', {{ value.deployment_count.vimzone_count }}],
+		      ['ECM', {{ value.deployment_count.ecm_count }}],
+		    ]);
+			
+		    var options = { title: 'Deployment Types',
+		    				backgroundColor: 'transparent',
+		    				'chartArea': {'width': '80%', 'height': '80%'},
+		    		        'width':500,
+		                    'height':300,
+		                    is3D: true,};
+		    
+		    var chart = new google.visualization.PieChart(document.getElementById('deployments-{{ cloud }}'));
+		    chart.draw(data, options);
+			}
+			
+			if (document.getElementById('venms-{{ cloud }}') != null){
+				{% if value.enm_projects_count %}
+				
+				// Create the data table.
+			    var data = new google.visualization.DataTable();
+			    data.addColumn('string', 'vENM Types');
+			    data.addColumn('number', 'Count');
+			    data.addRows([
+			      {% for type,count in value.enm_projects_count.items %}
+			      [ "{{type}}", {{ count }}],
+			      {% endfor %}
+			    ]);
+				
+			    var options = { title: 'vENM Types',
+			    				backgroundColor: 'transparent',
+			    				'chartArea': {'width': '80%', 'height': '80%'},
+			    		        'width':500,
+			                    'height':300,
+			                    is3D: true,};
+			    
+			    var chart = new google.visualization.PieChart(document.getElementById('venms-{{ cloud }}'));
+			    chart.draw(data, options);
+				{% endif %}
+			}
+		{% endfor %}
+		
+		{% for cloud,value in program_allocation_info.clouds.items %}
+		if (document.getElementById('program-cpu-allocation-{{ cloud }}') != null){
+		    var data = new google.visualization.DataTable();
+		    data.addColumn('string', 'Program');
+		    data.addColumn('number', 'CPU');
+		    data.addRows([
+		    {% for program,data in value.programs.items %}
+		    	["{{program}}", {{ data.total_allocated_cpu }}], 
+		    {% endfor %}
+		    {% if value.total_remaining_cpu_with_contention > 0 %} 
+		    	["Unallocated", {{ value.total_remaining_cpu_with_contention }}],
+		    {% endif %}
+		    ]);
+			
+		    var options = { title: 'Program CPU Allocation',
+		    				backgroundColor: 'transparent',
+		    				'chartArea': {'width': '80%', 'height': '80%'},
+		    		        'width':500,
+		                    'height':300,
+		                    is3D: true,};
+		    
+		    var chart = new google.visualization.PieChart(document.getElementById('program-cpu-allocation-{{ cloud }}'));
+		    chart.draw(data, options);
+		    
+		    var data = new google.visualization.DataTable();
+		    data.addColumn('string', 'Program');
+		    data.addColumn('number', 'RAM');
+		    data.addRows([
+		    {% for program,data in value.programs.items %}
+		    	["{{program}}", {{ data.total_allocated_ram }}], 
+		    {% endfor %}
+		    {% if value.total_remaining_ram_with_contention > -1 %}
+		    	["Unallocated", {{ value.total_remaining_ram_with_contention }}],
+		    {% endif %}
+		    ]);
+			
+		    var options = { title: 'Program RAM Allocation',
+		    				backgroundColor: 'transparent',
+		    				'chartArea': {'width': '80%', 'height': '80%'},
+		    		        'width':500,
+		                    'height':300,
+		                    is3D: true,};
+		    
+		    var chart = new google.visualization.PieChart(document.getElementById('program-ram-allocation-{{ cloud }}'));
+		    chart.draw(data, options);
+		    
+		    var data = new google.visualization.DataTable();
+		    data.addColumn('string', 'Program');
+		    data.addColumn('number', 'Count');
+		    data.addRows([
+		      {% for program,data in value.programs.items %}
+		    	["{{program}}", {{ data.number_of_projects }}],
+		      {% endfor %}
+		    ]);
+		    
+		    var options = { title: 'Projects Per Program',
+		    				backgroundColor: 'transparent',
+		    				'chartArea': {'width': '80%', 'height': '80%'},
+		    		        'width':500,
+		                    'height':300,
+		                    is3D: true,};
+			
+		    var chart = new google.visualization.PieChart(document.getElementById('programs-{{ cloud }}'));
+		    chart.draw(data, options);
+		}
+		{% endfor %}
+		
+		
+		var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Program');
+	    data.addColumn('number', 'CPU');
+	    data.addRows([
+	    {% for program,data in program_allocation_info.all_cloud_stats.programs.items %}
+	    	["{{program}}", {{ data.all_clouds_total_allocated_cpu }}], 
+	    {% endfor %}
+	    {% if program_allocation_info.all_cloud_stats.total_clouds_remaining_cpu > 0 %} 
+	    	["Unallocated", {{ program_allocation_info.all_cloud_stats.total_clouds_remaining_cpu }}],
+	    {% endif %}
+	    ]);
+		
+	    var options = { title: 'All Clouds Program CPU Allocation',
+	    				backgroundColor: 'transparent',
+	    				'chartArea': {'width': '80%', 'height': '80%'},
+	    		        'width':500,
+	                    'height':300,
+	                    is3D: true,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('programs-total-cpu-allocation'));
+	    chart.draw(data, options);
+	    
+	    var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Program');
+	    data.addColumn('number', 'RAM');
+	    data.addRows([
+	    {% for program,data in program_allocation_info.all_cloud_stats.programs.items %}
+	    	["{{program}}", {{ data.all_clouds_total_allocated_ram }}], 
+	    {% endfor %}
+	    {% if program_allocation_info.all_cloud_stats.total_clouds_remaining_ram > 0 %}
+	    	["Unallocated", {{ program_allocation_info.all_cloud_stats.total_clouds_remaining_ram }}],
+	    {% endif %}
+	    ]);
+		
+	    var options = { title: 'All Clouds Program RAM Allocation',
+	    				backgroundColor: 'transparent',
+	    				'chartArea': {'width': '80%', 'height': '80%'},
+	    		        'width':500,
+	                    'height':300,
+	                    is3D: true,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('programs-total-ram-allocation'));
+	    chart.draw(data, options);
+	    
+	    
+	    var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Program');
+	    data.addColumn('number', 'Count');
+	    data.addRows([
+	    {% for program,data in program_allocation_info.all_cloud_stats.programs.items %}
+	    	["{{program}}", {{ data.number_of_projects }}], 
+	   	{% endfor %}
+	    ]);
+		
+	    var options = { title: 'Projects Per Program',
+	    				backgroundColor: 'transparent',
+	    				'chartArea': {'width': '80%', 'height': '80%'},
+	    		        'width':500,
+	                    'height':300,
+	                    is3D: true,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('programs-all-clouds'));
+	    chart.draw(data, options);
+	    
+	    
+	    var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Deployment Type');
+	    data.addColumn('number', 'Count');
+	    data.addRows([
+	      ['vENM', {{ projects_breakdown.all_clouds.deployment_count.enm_count }}],
+	      ['CCD', {{ projects_breakdown.all_clouds.deployment_count.ccd_count }}],
+	      ['VIMZONE', {{ projects_breakdown.all_clouds.deployment_count.vimzone_count }}],
+	      ['ECM', {{ projects_breakdown.all_clouds.deployment_count.ecm_count }}],
+	    ]);
+		
+	    var options = { title: 'Deployment Types',
+	    				backgroundColor: 'transparent',
+	    				'chartArea': {'width': '80%', 'height': '80%'},
+	    		        'width':500,
+	                    'height':300,
+	                    is3D: true,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('deployments-all-clouds'));
+	    chart.draw(data, options);
+	    
+	    
+	    var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Program');
+	    data.addColumn('number', 'Count');
+	    data.addRows([
+	    {% for program,count in projects_breakdown.all_clouds.program_ccd_count.items %}
+	      ["{{program}}", {{ count }}], 
+	   	{% endfor %}
+	    ]);
+		
+	    var options = { title: 'Program CCD Count',
+	    				backgroundColor: 'transparent',
+	    				'chartArea': {'width': '80%', 'height': '80%'},
+	    		        'width':500,
+	                    'height':300,
+	                    is3D: true,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('ccd-count-all-clouds'));
+	    chart.draw(data, options);
+	}
+	
+    $(document).ready(function() {
+    	
+	});
+
+    
+</script>
+
+{% endblock extrascripts %}

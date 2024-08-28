@@ -1,0 +1,87 @@
+<!--Sort out page inheritance once the base.html page is created-->
+{% block page_content %}
+       
+<!-- page content -->
+<div class="right_col" role="main">
+<div class="clearfix"></div>
+<div class="col-md-16 col-sm-16 col-xs-16">
+<div class="x_panel">
+	<div class="x_title">
+		<h2>New CCD Cloud Calculator Results for {{cloud_name}}</h2>
+		<div class="clearfix"></div>
+	</div>
+	<div class="x_content">
+<div class="x_panel">
+<div class="x_title">
+  <h3>Compute Host Summary</h3>
+</div>
+<div class="panel-body">
+<table id="hosts" class="table compact table-bordered">
+  <thead>
+	<tr>
+		<th>Host</th>
+		<th>Remaining CPU</th>
+		<th>Remaining RAM (GB)</th>
+		<th>Instances</th>
+	</tr>
+  </thead>
+  <tbody>
+    {% for key,value in hosts.items %}
+    <tr>
+        <td>{{key}}</td>
+        <td>{{value.cpu}}</td>
+		<td>{{value.ram}}</td>
+		<td>{{value.instances|length}}</td>
+    </tr>
+	{% endfor %}
+  </tbody>
+</table>
+<div class="x_title">
+  <h3>Cloud Summary</h3>
+</div>
+  
+  {% for item in cloud_summary %}
+    <p>{{item}}</p> 
+  {% endfor %}
+
+
+{% if skipped_vms %}
+<div class="x_title">
+  <h3>Skipped VMs</h3>
+</div>
+  <table id="skipped_vms" class="table compact   table-bordered">
+  <thead>
+	<tr>
+		<th>VM Name</th>
+		<th>CPU</th>
+		<th>RAM</th>
+	</tr>
+  </thead>
+  <tbody>
+    {% for key,value in skipped_vms.items %}
+    <tr>
+        <td>{{key}}</td>
+        <td>{{value.cpu}}</td>
+		<td>{{value.ram}}</td>
+    </tr>
+	{% endfor %}
+  </tbody>
+</table>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+
+{% endblock %}
+
+
+
+
+
+
+

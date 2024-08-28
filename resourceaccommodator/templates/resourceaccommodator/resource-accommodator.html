@@ -1,0 +1,824 @@
+{% extends 'utils/main.html' %} {% block content %}
+<section class="content" ng-show="!transitioning">
+	<section class="container">
+		<div class="page-header">
+			<h1>Resource Accommodator</h1>
+		</div>
+		
+		<ul class="nav nav-tabs" id="resource_accommodator_tab" role="tablist">
+		  <li class="nav-item">
+		    <a class="nav-link active" id="ccd_tab" data-toggle="tab" href="#ccd" role="tab" aria-controls="ccd" aria-selected="true">CCD Only</a>
+		  </li>
+		  <li class="nav-item">
+		    <a class="nav-link" id="non_ccd_tab" data-toggle="tab" href="#non_ccd" role="tab" aria-controls="non_ccd" aria-selected="false">Non CCD</a>
+		  </li>
+		</ul>
+		<div class="tab-content" id="resource_accommodator_tab_content">
+		<div class="tab-pane active" id="ccd" role="tabpanel" aria-labelledby="ccd-tab">
+			<h2 style="width: 43%; float: left;">Cloud Planning</h2>
+		<h2 style="width: 43%; margin-left: 2px; float: left;">Existing
+			Clouds</h2>
+			<form action="{% url 'resourceaccommodator:cloud-calculator' %}"
+				method="POST">
+				<div class="col-md-3">
+					<h4>Cloud Details</h4>
+
+					<div class="btn-toolbar input-group" style="width: 300px">
+						<label for="cloud_name">Cloud:</label><select class="form-control"
+							id="cloud_name" name="cloud_name" placeholder="Cloud Name"
+							required="required" autocomplete="off" onchange="autofill('ccd')">
+							{% for cloud in potential_clouds %}
+							<option>{{cloud.cloud_name}}</option> {% endfor %}
+						</select><br> <label for="no_of_hosts">Number of hosts:</label><input
+							type="text" class="form-control" name="no_of_hosts"
+							id="no_of_hosts" placeholder="Number of Hosts"
+							required="required" autocomplete="off"><br> <label
+							for="phys_cpu">Physical CPU per host:</label><input type="text"
+							class="form-control" name="phys_cpu" id="cpu_per_host"
+							placeholder="Physical CPU per host" required="required"
+							autocomplete="off"><br> <label for="cpu_contention">CPU
+							contention:</label><input type="text" class="form-control"
+							name="cpu_contention" id="cpu_contention"
+							placeholder="CPU Contention" required="required"
+							autocomplete="off"><br> <label for="phys_ram">RAM
+							per host:</label><input type="text" class="form-control" name="phys_ram"
+							id="ram_per_host" placeholder="RAM per host" required="required"
+							autocomplete="off"><br> <label for="ram_contention">RAM
+							Contention</label><input type="text" class="form-control"
+							name="ram_contention" id="ram_contention"
+							placeholder="RAM Contention" required="required"
+							autocomplete="off"><br><label for="total_storage">Total Storage
+							</label><input type="text" class="form-control"
+							name="total_storage" id="total_storage"
+							placeholder="Total Storage" required="required"
+							autocomplete="off"><br>
+							
+							
+					</div>
+				</div>
+				<div class="col-md-2">
+					<div class="form-group">
+						<h4>Project Choices</h4>
+						<label for="projects_description"> </label>
+
+						<textarea class="form-control" readonly
+							style="height: 195px; width: 220px;">
+Enter projects in the following format:
+Project_name-node_type, node count, node CPU, node RAM (GB)
+Example:
+Test_Project-worker,7,10,12
+Test_Project-master,3,2,4
+Test_Project-director,2,2,4</textarea>
+						
+					</div>
+
+					<label for="projects">Projects * </label>
+					<div>
+						<textarea class="resizable_textarea form-control"
+							placeholder="Enter list of projects here."
+							style="margin-top: 0px; margin-bottom: 0px; height: 190px; width: 220px;"
+							id="projects" name="projects"></textarea>
+					</div>
+					<br>
+					<div class="btn-toolbar input-group" style="width: 220px">
+						<label for="item_quantity">Quantity</label> 
+							<input type="number" id="quantity" name="item_quantity" min="1"> 
+							<select	class="form-control" name="item" id="item"> 
+							{% for item	in orderable_items %}
+							<option value="{{item}}">{{item}}</option> 
+							{% endfor %}
+							</select>
+						<button type="button" class="addAnotherOrderableItem">Add
+							more Orderable Items</button>
+						<div class="anExtraItem"></div>
+					</div>
+					<div class="form-group">
+						<input type="submit" class="btn btn-primary" />
+					</div>
+
+				</div>
+			</form>
+			
+
+			<div class="col-md-2">
+				<div class="existing_clouds">
+					<label for="cloud_name">Cloud:</label><select class="form-control"
+						id="existing_cloud_name" name="existing_cloud_name"
+						placeholder="Cloud Name" required="required"
+						onchange="show_ccd_breakdown()" autocomplete="off"
+						style="width: 220px;"> 
+						{% for ccd_cloud in	existing_clouds %}
+						<option>{{ccd_cloud.cloud_name}}</option> 
+						{% endfor %}
+					</select><br> <input id="expansion_details" name="expansion_details"
+						type="button" class="btn btn-primary"
+						value="Expand Existing Project" onclick="add_expansion_info()"
+						disabled /> <input id="new_project_details"
+						name="new_project_details" type="button" class="btn btn-primary"
+						value="Add New Project" onclick="add_new_projects()" disabled />
+					<form action="{% url 'resourceaccommodator:cloud-calculator' %}"
+						method="POST">
+						<input type="hidden" id="ccd_breakdown" name="ccd_breakdown"
+							value="{{ccd_breakdown}}" /> <input type="hidden"
+							id="selected_cloud" name="selected_cloud" />
+						<div class="ccd_expansion">
+							<input type="hidden" id="modified_items_values"
+								name="modified_items_values">
+							<textarea class="form-control" id="cloud_ccd_breakdown"
+								name="cloud_ccd_breakdown" readonly
+								style="margin-top: 0px; margin-bottom: 0px; height: 350px; width: 220px; display: none; resize: vertical;"></textarea>
+						</div>
+						<div class="form-group">
+							<div>
+								<span class="tool-tip" data-toggle="tooltip"
+									data-placement="bottom"
+									title="Please Save Changes before Submitting"
+									style="display: inline-block;"></span> <input
+									id="expansion_submit" name="expansion_submit" type="submit"
+									class="btn btn-primary" disabled />
+							</div>
+
+						</div>
+					</form>
+					<div>
+					 <input type="hidden" id="deployment_type_resources" name="deployment_type_resources"
+					 	value="{{deployment_type_resources}}"></input>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-5">
+				<div class="orderable_item_table_div">
+					<table
+						class="table table-striped table-condensed table-hover dataTable no-footer"
+						id="orderable_item_table">
+						<thead>
+							<tr>
+								<th colspan="4"></th>
+								<th colspan="3">Worker App</th>
+							</tr>
+							<tr>
+								<th>Name</th>
+								<th>vCPU</th>
+								<th>RAM</th>
+								<th>Volume</th>
+								<th>Node Count</th>
+								<th>vCPU</th>
+								<th>RAM</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="non_ccd" role="tabpanel" aria-labelledby="non-ccd-tab">
+		<div class="col-md-3">
+					<h4>Cloud Details</h4>
+					<div class="btn-toolbar input-group" style="width: 300px">
+						<label for="cloud_name">Cloud:</label><select class="form-control"
+							id="non_ccd_cloud_name" name="non_ccd_cloud_name" placeholder="Cloud Name"
+							required="required" autocomplete="off" onchange="autofill('non_ccd')">
+							{% for cloud in potential_clouds %}
+							<option>{{cloud.cloud_name}}</option> {% endfor %}
+						</select><br> <label for="no_of_hosts">Number of hosts:</label><input
+							type="text" class="form-control" name="no_of_hosts"
+							id="non_ccd_no_of_hosts" placeholder="Number of Hosts"
+							required="required" autocomplete="off"><br> <label
+							for="phys_cpu">Physical CPU per host:</label><input type="text"
+							class="form-control" name="phys_cpu" id="non_ccd_cpu_per_host"
+							placeholder="Physical CPU per host" required="required"
+							autocomplete="off"><br> <label for="cpu_contention">CPU
+							contention:</label><input type="text" class="form-control"
+							name="cpu_contention" id="non_ccd_cpu_contention"
+							placeholder="CPU Contention" required="required"
+							autocomplete="off"><br> <label for="phys_ram">RAM
+							per host:</label><input type="text" class="form-control" name="phys_ram"
+							id="non_ccd_ram_per_host" placeholder="RAM per host" required="required"
+							autocomplete="off"><br> <label for="ram_contention">RAM
+							Contention</label><input type="text" class="form-control"
+							name="ram_contention" id="non_ccd_ram_contention"
+							placeholder="RAM Contention" required="required"
+							autocomplete="off"><br><label for="total_storage">Total Storage
+							</label><input type="text" class="form-control"
+							name="total_storage" id="non_ccd_total_storage"
+							placeholder="Total Storage" required="required"
+							autocomplete="off"><br>
+							
+							
+					</div>
+				</div>
+		<div class="col-md-3" style="width: 300px">
+		<h4>Non-CCD project info</h4>
+							<div class="non_ccd_project_info">
+							<label for="project_name">Project Name
+							</label><input type="text" class="form-control"
+							name="project_name" id="project_name"
+							placeholder="Project Name" required="required"
+							autocomplete="off">
+							 <label for="deployment_type">Deployment Type</label><select class="form-control"
+							id="deployment_type" onChange="deployment_type_autofill()" name="deployment_type">
+							<option value="5K">5K</option>
+							<option value="MT_5K_Functional">MT_5K_Functional</option>
+							<option value="Feature_Test_Multi_Instance">Feature_Test_Multi_Instance</option>
+							<option value="Feature_Test_Single_Instance">Feature_Test_Single_Instance</option>
+							<option value="ExtraSmall">ExtraSmall</option>
+							</select> 
+							<label for="proj_cpu">CPU
+							</label><input type="number" class="form-control"
+							name="project_cpu" id="project_cpu"
+							placeholder="CPU" required="required"
+							autocomplete="off">
+							<label for="proj_ram">RAM (GB)
+							</label><input type="number" class="form-control"
+							name="project_ram" id="project_ram"
+							placeholder="RAM" required="required"
+							autocomplete="off">
+							<label for="proj_storage">Total Storage (GB)
+							</label><input type="number" class="form-control"
+							name="project_storage" id="project_storage"
+							placeholder="Storage" required="required"
+							autocomplete="off">
+							<label for="projects_list"> </label>
+
+						<textarea class="form-control" readonly
+							style="height: 195px; width: 250px;">
+Enter projects in the following format:
+Project_name, vCPU, RAM (GB), Storage
+Example:
+Project_CXXXXX,450,1000,2400
+Project_CXXXXX,330,1000,1200
+Project_CXXXXX,200,350,800</textarea><br>
+						<textarea class="resizable_textarea form-control"
+							placeholder="Enter list of projects here."
+							style="margin-top: 0px; margin-bottom: 0px; height: 190px; width: 220px;"
+							id="non_ccd_projects" name="non_ccd_projects"></textarea><br>
+					
+							</div>
+							<div class="non_ccd_projects">
+								<input type="submit" class="btn btn-primary" id="add_project"/>
+							</div>
+		</div>
+		<div class="col-md-6">
+			<h4>Cloud Breakdown</h4>
+			<div class="non_ccd_project_table">
+					<table
+						class="table table-striped table-condensed table-hover dataTable no-footer"
+						id="non_ccd_project_table">
+						<thead>
+							<tr>
+								<th>Project Name</th>
+								<th>vCPU</th>
+								<th>RAM (GB)</th>
+								<th>Volume (GB)</th>
+								<th class="no_export">Delete</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+						<tfoot>
+							<tr>
+							<td>Total Allocated</td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							</tr>
+							<tr>
+							<td>Total Cloud Resources</td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							</tr>
+							<tr style="font-weight:bold">
+							<td>Total Remaining Resources</td>
+							<td id="remaining_cpu"></td>
+							<td id="remaining_ram"></td>
+							<td id="remaining_storage"></td>
+							<td></td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+		</div>
+		</div>
+		</div>
+	</section>
+</section>
+
+
+{% endblock content %} {% block extrascripts %}
+
+<!-- Custom Theme Style -->
+<link rel="stylesheet" type="text/css"
+	href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript"
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" charset="utf8"
+	src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript"
+	src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript"
+	src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<!--  <style type="text/css">
+.vertical_Line {
+    background-color: #000;
+    bottom: 0;
+    left: 43%;
+    position: absolute;
+    transform: transitionX(-50%);
+    top: 25%;
+    width: 1px;
+}
+</style>-->
+<script type="text/javascript">
+
+$(document).ready(function() {
+    autofill("ccd");
+    show_ccd_breakdown();
+    autofill("non-ccd");
+});
+    
+var ccd_list = [];
+var cloud_ccd_info="";
+var counter=1;
+var total_cloud_info = [];
+var non_ccd_table = "";
+var nCellsRow2 = "";
+var nCells = "";
+$('.addAnotherOrderableItem').on('click', function(){
+	var html = '<div class="anotherItem"><div class="addOrderableItem"><label for="item_quantity">Quantity</label><input type="number" id="quantity" name="item_quantity" min="1"><select class="form-control" name="item" id="item" >{% for item in orderable_items %}<option value="{{item}}"> {{item}}</option>{% endfor %}</select></div><div class="removeOrderableItem"><button type="button">Remove Orderable Item</button></div></div>';
+	$('.anExtraItem').append(html);
+	counter++;
+	var startElement = $("#orderableItemNum");
+    var value = parseInt(startElement.val());
+    startElement.val(value + 1);
+});
+
+$('.anExtraItem').on('click', '.removeOrderableItem', function(e){
+	e.preventDefault();
+    $(this).parent('div').remove();
+});
+
+$('.ccd_expansion').on('click', '.removeOrderableItem', function(e){
+	e.preventDefault();
+	$(this).parent('div').remove();
+});
+
+function autofill(tab_choice){
+	if (tab_choice == "ccd"){
+		var myselect = document.getElementById("cloud_name");
+		var cloud_name = myselect.options[myselect.selectedIndex].value;
+		var no_of_hosts_val = document.getElementById("no_of_hosts");
+		var cpu_val = document.getElementById("cpu_per_host");
+		var cpu_contention_val = document.getElementById("cpu_contention");
+		var ram_val = document.getElementById("ram_per_host");
+		var ram_contention_val = document.getElementById("ram_contention");
+		var total_storage_val = document.getElementById("total_storage");
+	}else{
+		var myselect = document.getElementById("non_ccd_cloud_name");
+		var cloud_name = myselect.options[myselect.selectedIndex].value;
+		var no_of_hosts_val = document.getElementById("non_ccd_no_of_hosts");
+		var cpu_val = document.getElementById("non_ccd_cpu_per_host");
+		var cpu_contention_val = document.getElementById("non_ccd_cpu_contention");
+		var ram_val = document.getElementById("non_ccd_ram_per_host");
+		var ram_contention_val = document.getElementById("non_ccd_ram_contention");
+		var total_storage_val = document.getElementById("non_ccd_total_storage");
+	}	
+			
+	var ip = self.location.origin
+	var view_url = '/get-potential-cloud-api/'
+	var potential_clouds_response
+	full_url = ip + view_url
+	$.ajax({
+		url: full_url,
+		async: false,
+		type: "GET",
+		data: {'potential_cloud': cloud_name},
+		success: function(response) {
+			potential_clouds_response = response		
+		}
+	})
+	
+	if(potential_clouds_response){
+		total_cpu = potential_clouds_response["potential_cloud"]['total_cpu']
+		cpu_contention = potential_clouds_response["potential_cloud"]['cpu_contention']
+		cpu_per_host = ((total_cpu/cpu_contention)/potential_clouds_response["potential_cloud"]['number_of_hosts']);
+		total_ram = potential_clouds_response["potential_cloud"]['total_ram']
+		ram_contention = potential_clouds_response["potential_cloud"]['ram_contention']
+		ram_per_host = ((total_ram/ram_contention)/potential_clouds_response["potential_cloud"]['number_of_hosts']);
+		
+		no_of_hosts_val.value = potential_clouds_response["potential_cloud"]['number_of_hosts']
+		cpu_val.value = Math.floor(cpu_per_host);
+		cpu_contention_val.value = potential_clouds_response["potential_cloud"]['cpu_contention']
+		ram_val.value = Math.floor(ram_per_host);
+		ram_contention_val.value = potential_clouds_response["potential_cloud"]['ram_contention']
+		total_storage_val.value = potential_clouds_response["potential_cloud"]['storage']
+		total_cloud_info['cpu'] = total_cpu
+		total_cloud_info['ram'] = total_ram
+		total_cloud_info['storage'] = total_storage_val.value
+	}
+	calculate_total_non_ccd_table();
+}
+
+
+var modified_items = []
+var modified_items_values = []
+function add_expansion_info(){
+    modified_items = []
+    modified_items_values = []
+    document.getElementById("modified_items_values").value=""
+	$('.existing_cloud_new_project').remove();
+	var html = '<div class="ccd_expansion_info"><label for="orderable_item">Orderable Item:</label><select class="form-control" name="ccd_orderable_item" id="ccd_orderable_item" onchange="get_orderable_item_worker_info()"></select></div></div>';
+	$('.ccd_expansion').append(html);
+	var ccd_select = document.getElementById('ccd_orderable_item');
+	ccd_select.length=0;
+	for(var i = 0, l = ccd_list.length; i < l; i++){
+		var option = ccd_list[i];
+		ccd_select.options.add( new Option(option) );
+	}
+    if(!document.getElementById("save-btn")){
+        var btn = document.createElement("button")
+        btn.className =  "btn btn-secondary"
+        btn.innerHTML = "Save Changes"
+        btn.id = "save-btn"
+        btn.type="button"
+        document.getElementById("expansion_submit").parentNode.insertBefore(btn, document.getElementById("expansion_submit"))
+    }
+    if(!document.getElementById("reset-btn")){
+        var btn = document.createElement("button")
+        btn.className =  "btn btn-secondary"
+        btn.innerHTML = "Reset Changes"
+        btn.id = "reset-btn"
+        btn.type="button"
+        document.getElementById("expansion_submit").parentNode.insertBefore(btn, document.getElementById("expansion_submit"))
+        btn.onclick = function (){
+            modified_items = []
+            modified_items_values = []
+            document.getElementById("modified_items_values").value=""
+            var ccd_select = document.getElementById('ccd_orderable_item');
+            for(let i = 0; i < ccd_select.options.length; i++){
+                ccd_select.options[i].style.backgroundColor = ""
+
+            }
+        }
+    }
+
+	var cloud_ccd_breakdown = document.getElementById("cloud_ccd_breakdown");
+	cloud_ccd_breakdown.value = cloud_ccd_info
+	ccd_list.length = 0;
+
+	get_orderable_item_worker_info();
+}
+
+function save_item_values(orderable_item){
+    var index = modified_items.indexOf(orderable_item)
+    if(index === -1) {
+        modified_items.push(orderable_item)
+        modified_items_values.push({
+            "name": orderable_item,
+            "node_count": document.getElementById("worker_node_count").value,
+            "vcpu": document.getElementById("worker_app_vcpu").value,
+            "ram": document.getElementById("worker_app_ram").value,
+            "quantity": document.getElementById("orderable_item_qty").value
+        })
+    }
+    else{
+        modified_items[index] = orderable_item
+        modified_items_values[index] = {
+            "name": orderable_item,
+            "node_count": document.getElementById("worker_node_count").value,
+            "vcpu": document.getElementById("worker_app_vcpu").value,
+            "ram": document.getElementById("worker_app_ram").value,
+            "quantity": document.getElementById("orderable_item_qty").value
+        }
+    }
+    var items_string = []
+    var items_list = document.getElementById("modified_items_values")
+    for(i=0;i < modified_items_values.length;i++){
+        items_string.push(JSON.stringify(modified_items_values[i]))
+    }
+    items_list.value = items_string
+    var ccd_select = document.getElementById('ccd_orderable_item');
+    for(let i = 0; i < ccd_select.options.length; i++){
+        if(modified_items.includes(ccd_select.options[i].value)){
+		    ccd_select.options[i].style.backgroundColor = "#c1dbff"
+        }
+    }
+
+}
+function update_ccd_table(ccd_list){
+	if(document.contains(document.getElementById("error_message"))) {
+		document.getElementById("error_message").remove();
+	}
+	var orderable_item_table_info = [];
+	var ip = self.location.origin
+	var view_url = '/get-all-orderable-items-api'
+	var orderable_items_response
+	full_url = ip + view_url
+	$.ajax({
+		url: full_url,
+		async: false,
+		type: "GET",
+		success: function(response) {
+			orderable_items_response = response		
+		}
+	})
+	
+	if(orderable_items_response){
+		orderable_items_info = orderable_items_response["orderable_items_info"];
+		for(let i=0; i < ccd_list.length;i++){
+			if(!orderable_items_info.some(item => item.orderable_item_name === ccd_list[i].toUpperCase())){
+				var error_html = '<div class="alert alert-danger alert-dismissable fade in" id="error_message"><a href="#" class="close" data-dismiss="alert" aria-label="close">x</a><p>Error, cannot update DataTable as there is no orderable item named <b>' + ccd_list[i].toUpperCase() + '</b> in the Okta database</p></div>'
+				$('.orderable_item_table_div').append(error_html);
+				table = $('#orderable_item_table').DataTable();
+				table.clear().draw();
+				return false;
+			}
+			orderable_items_info.forEach(function (orderable_item) {	
+				if(orderable_item["orderable_item_name"] == ccd_list[i].toUpperCase()){
+					orderable_item_table_info[i] = {
+						orderable_item_name: orderable_item["orderable_item_name"],
+						vcpu: orderable_item["vcpu"],
+						ram: orderable_item["ram"],
+						volume_storage: orderable_item["volume_storage"],
+						worker_app_node_count: orderable_item["worker_app_node_count"],
+						worker_app_vcpu: orderable_item["worker_app_vcpu"],
+						worker_app_ram: orderable_item["worker_app_ram"]
+					}
+				}
+			});
+		}
+	}
+	
+	table = $('#orderable_item_table').DataTable( {
+		destroy: true,
+		retrieve: true,
+		paging: false,
+	    searching: false,
+	    data: orderable_item_table_info,
+	    columns: [
+	        { data: 'orderable_item_name' },
+	        { data: 'vcpu' },
+	        { data: 'ram' },
+	        { data: 'volume_storage' },
+	        { data: 'worker_app_node_count' },
+	        { data: 'worker_app_vcpu' },
+	        { data: 'worker_app_ram' }
+	    ]
+	} );
+	//table.draw();
+	table.destroy();
+	
+}
+
+function get_orderable_item_worker_info(){
+	var orderable_item_select = document.getElementById("ccd_orderable_item");
+	var orderable_item = orderable_item_select.options[orderable_item_select.selectedIndex].value;
+	var ccd_breakdown_text = document.getElementById("cloud_ccd_breakdown").value;
+	var line = ccd_breakdown_text.split(orderable_item)[1];
+	var orderable_item_quantity = line.split(" ")[2];
+	var ip = self.location.origin
+	var view_url = '/get-orderable-item-api/'
+	var orderable_item_response
+	full_url = ip + view_url
+	$.ajax({
+		url: full_url,
+		async: false,
+		type: "GET",
+		data: {'orderable_item': orderable_item},
+		success: function(response) {
+			orderable_item_response = response		
+		}
+	})
+	event.preventDefault();
+	if(orderable_item_response){
+		if(document.getElementById("worker_node_count") === null){
+			var html = '<div class="orderable_item_qty"><label for="orderable_item_qty">Orderable Item Quantity:</label><input type="number" class="form-control" name="orderable_item_qty" id="orderable_item_qty"></input></div><div class="worker_info"><label for="Worker_node_info">Worker Node Count:</label><input type="number" class="form-control" name="worker_node_count" id="worker_node_count"></input><label for="worker_vcpu">Worker vCPU:</label><input type="number" class="form-control" name="worker_app_vcpu" id="worker_app_vcpu"></input><label for="worker_ram">Worker RAM:</label><input type="number" class="form-control" name="worker_app_ram" id="worker_app_ram"></input></div></div>';
+			$('.ccd_expansion').append(html);
+			}
+		var save_btn = document.getElementById("save-btn")
+        save_btn.onclick = function () {save_item_values(orderable_item);document.getElementById("expansion_submit").disabled = false;}
+		var worker_node_count = document.getElementById("worker_node_count");
+		var worker_vcpu = document.getElementById("worker_app_vcpu");
+		var worker_ram = document.getElementById("worker_app_ram");
+		var orderable_item_qty = document.getElementById("orderable_item_qty");
+		worker_node_count.value = orderable_item_response["orderable_item_info"]['worker_app_node_count'];
+		worker_vcpu.value = orderable_item_response["orderable_item_info"]['worker_app_vcpu'];
+		worker_ram.value = orderable_item_response["orderable_item_info"]['worker_app_ram'];
+		orderable_item_qty.value = orderable_item_quantity.split("\n")[0];
+
+	}
+}
+
+function add_new_projects(){
+    var save = document.getElementById("save-btn")
+    var reset = document.getElementById("reset-btn")
+    if(save){
+        save.remove()
+    }
+    if(reset){
+        reset.remove()
+    }
+	var item_select = document.getElementById('ccd_orderable_item');
+	var item_quantity = document.getElementById('orderable_item_qty');
+	var worker_values = document.getElementById('worker_node_count');
+	if (item_select != null){
+		item_select.parentNode.remove();
+		if (item_quantity != null){
+			item_quantity.parentNode.remove();
+			worker_values.parentNode.remove();
+		}
+	}
+	document.getElementById("cloud_ccd_breakdown").style.display = "block";
+	var html = '<div class="existing_cloud_new_project"><label for="item_quantity">Quantity</label><input type="number" id="quantity" name="item_quantity" min="1"><select class="form-control" name="item" id="item" >{% for item in orderable_items %}<option value="{{item}}"> {{item}}</option>{% endfor %}</select><div class="removeOrderableItem"><button type="button">Remove Orderable Item</button></div></div>';
+	$('.ccd_expansion').append(html);
+	document.getElementById("expansion_submit").disabled = false;
+
+}
+
+function show_ccd_breakdown(){
+	ccd_list.length = 0;
+	document.getElementById("expansion_details").disabled = false;
+	document.getElementById("new_project_details").disabled = false;
+	cloud_ccd_info="";
+	var cloud_select = document.getElementById("existing_cloud_name");
+	var cloud_name = cloud_select.options[cloud_select.selectedIndex].value;
+	var selected_cloud = document.getElementById("selected_cloud");
+	selected_cloud.value = cloud_name;
+	var ccd_text_area = document.getElementById("ccd_breakdown");
+	ccd_break = [document.getElementById("ccd_breakdown").value];
+	var ccd_json = JSON.parse(ccd_break[0]);
+	var worker_details = document.getElementById("worker_node_count");
+	var item_quantity = document.getElementById("orderable_item_qty");
+	if (worker_details != null){
+		worker_details.parentNode.remove();
+		item_quantity.parentNode.remove();
+	}
+	if (typeof ccd_json[cloud_name] === 'undefined') {
+		cloud_ccd_info = "No ccd's in " + cloud_name;
+		document.getElementById("cloud_ccd_breakdown").style.display = "block";
+		var ccd_select = document.getElementById('ccd_orderable_item');
+		if(ccd_select != null) {
+			ccd_select.length=0;
+			ccd_select.parentNode.remove();
+		}
+	} else {
+		var ccd_info = document.getElementById("ccd_orderable_item");
+		if (ccd_info != null){
+			ccd_info.parentNode.remove();
+		}
+		for(let i = 0, l = ccd_json[cloud_name].length; i <l; i++) {
+			if (((i+1) % 2) == 0) {
+				cloud_ccd_info = cloud_ccd_info.concat(" x ");
+				cloud_ccd_info = cloud_ccd_info.concat(ccd_json[cloud_name][i]);
+				cloud_ccd_info = cloud_ccd_info.concat("\n");
+			}else{
+				cloud_ccd_info = cloud_ccd_info.concat(ccd_json[cloud_name][i]);
+				ccd_list.push(ccd_json[cloud_name][i]);
+			}
+		}
+		document.getElementById("cloud_ccd_breakdown").style.display = "block";
+	}
+	var cloud_ccd_breakdown = document.getElementById("cloud_ccd_breakdown");
+	cloud_ccd_breakdown.value = cloud_ccd_info
+	update_ccd_table(ccd_list);
+}
+
+function calculate_total_non_ccd_table() {
+	var allocated_totals = [];
+	non_ccd_table = $('#non_ccd_project_table').DataTable( {
+		paging: false,
+	    searching: false,
+	    "retrieve": true,
+		"footerCallback": function ( row, data, start, end, display ) {
+			var api = this.api();
+			nb_cols = api.columns().nodes().length;
+			var j = 1;
+			
+			while(j < nb_cols){
+				var page_total = api
+            		.column( j, { page: 'current'} )
+            		.data()
+            		.reduce( function (a, b) {
+                		return Number(a) + Number(b);
+            		}, 0 );
+      			
+				// Update footer
+      			$( api.column(j).footer() ).html(page_total);
+				allocated_totals.push(page_total);
+				j++;
+			}
+			
+			var total_cloud_row = $(row).next()[0];
+			nCells = total_cloud_row.getElementsByTagName('td');
+			nCells[1].innerHTML = total_cloud_info['cpu'];
+			nCells[2].innerHTML = total_cloud_info['ram'];
+			nCells[3].innerHTML = total_cloud_info['storage'];
+			
+			var total_remaining_row = $(total_cloud_row).next()[0];
+			nCellsRow2 = total_remaining_row.getElementsByTagName('td');
+			nCellsRow2[1].innerHTML = total_cloud_info['cpu'] - allocated_totals[0];
+			nCellsRow2[2].innerHTML = total_cloud_info['ram'] - allocated_totals[1];
+			nCellsRow2[3].innerHTML = total_cloud_info['storage'] - allocated_totals[2];
+			//Changing background color of remaining resources footer
+			if(nCellsRow2[1].innerHTML < 0){
+				document.getElementById("remaining_cpu").style.backgroundColor = '#F0141B';
+			}
+			if(nCellsRow2[2].innerHTML < 0){
+				document.getElementById("remaining_ram").style.backgroundColor = '#F0141B';
+			}
+			if(nCellsRow2[3].innerHTML < 0){
+				document.getElementById("remaining_storage").style.backgroundColor = '#F0141B';
+			}
+		},
+		dom: 'Bfrtip',
+		buttons: [ 
+			{ 
+				extend: 'csvHtml5',
+				exportOptions: {
+					columns: "thead th:not(.no_export)"
+				},
+				footer: true,
+				customize: function (csv) {
+					return csv + "\nTotal Cloud Resources," + nCells[1].innerHTML + "," + nCells[2].innerHTML + ","  + nCells[3].innerHTML 
+					+ "\nTotal Remaining Resources," + nCellsRow2[1].innerHTML + "," + nCellsRow2[2].innerHTML + ","  + nCellsRow2[3].innerHTML;
+				}
+			}
+		]
+	} );
+	non_ccd_table.draw();
+}
+
+$('#add_project').on('click', function(){
+	var project_name = document.getElementById("project_name");
+	var project_cpu = document.getElementById("project_cpu");
+	var project_ram = document.getElementById("project_ram");
+	var project_storage = document.getElementById("project_storage");
+	var project_list = document.getElementById("non_ccd_projects");
+	
+	if(!project_list.value && project_name.value){
+		non_ccd_table.row.add($("<tr><td>" + project_name.value + "</td><td>" + project_cpu.value + "</td><td>" + project_ram.value + "</td><td>" + project_storage.value + "</td><td><button>Delete</button></td>")).draw(false);
+	}else if(project_list.value && project_name.value){
+		var project_lines = project_list.value.split('\n');
+		for(var i=0; i < project_lines.length; i++){
+			proj_info = project_lines[i].split(',');
+			non_ccd_table.row.add($("<tr><td>" + proj_info[0] + "</td><td>" + proj_info[1] + "</td><td>" + proj_info[2] + "</td><td>" + proj_info[3] + "</td><td><button>Delete</button></td>")).draw(false);
+		}
+		non_ccd_table.row.add($("<tr><td>" + project_name.value + "</td><td>" + project_cpu.value + "</td><td>" + project_ram.value + "</td><td>" + project_storage.value + "</td><td><button>Delete</button></td>")).draw(false);
+	}else if(project_list.value){
+		var project_lines = project_list.value.split('\n');
+		for(var i=0; i < project_lines.length; i++){
+			proj_info = project_lines[i].split(',');
+			non_ccd_table.row.add($("<tr><td>" + proj_info[0] + "</td><td>" + proj_info[1] + "</td><td>" + proj_info[2] + "</td><td>" + proj_info[3] + "</td><td><button>Delete</button></td>")).draw(false);
+		}
+	}else{
+		alert("Please add something to the table");
+	}
+	
+	non_ccd_table.destroy();
+	calculate_total_non_ccd_table();
+	document.getElementById("project_name").value = "";
+	document.getElementById("project_cpu").value = "";
+	document.getElementById("project_ram").value = "";
+	document.getElementById("project_storage").value = "";
+	document.getElementById("non_ccd_projects").value = "";
+	
+	//Need to add in red highlighting if the value is a minus number, green if it is not
+});
+
+$('#non_ccd_project_table tbody').on( 'click', 'button', function () {
+	non_ccd_table.row($(this).parents('tr')).remove().draw();
+	nCellsRow2[1].innerHTML = total_cloud_info['cpu'] - $(non_ccd_table.column(1).footer()).text();
+	nCellsRow2[2].innerHTML = total_cloud_info['ram'] - $(non_ccd_table.column(2).footer()).text();
+	nCellsRow2[3].innerHTML = total_cloud_info['storage'] - $(non_ccd_table.column(3).footer()).text();
+} );
+
+function deployment_type_autofill() {
+	var type_select = document.getElementById("deployment_type");
+	var chosen_deployment_type = type_select.options[type_select.selectedIndex].value;
+	var resources_breakdown = document.getElementById("deployment_type_resources").value;
+	res_breakdown = resources_breakdown.replaceAll("'", '"');
+	var resources_json = JSON.parse(res_breakdown);
+	
+	var cpu_resources = document.getElementById("project_cpu");
+	var ram_resources = document.getElementById("project_ram");
+	var storage_resources = document.getElementById("project_storage");
+	
+	resources_json.forEach(deployment_type => {
+		for (let key in deployment_type) {
+			if(deployment_type[key] == chosen_deployment_type){
+				cpu_resources.value = deployment_type['vcpu'];
+				ram_resources.value = Math.round(deployment_type['ram'] / 1024);
+				storage_resources.value = deployment_type['volume_storage'];
+			}
+		}
+	});
+
+}
+</script>
+
+{% endblock extrascripts %}

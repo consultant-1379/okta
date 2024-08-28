@@ -1,0 +1,100 @@
+{% extends 'utils/main.html' %}
+
+{% block content %}
+	<section class="content" ng-show="!transitioning" style="">
+		<section class="container">
+			<ui-view>
+			<div class="page-header">
+				<h1>Forecasts</h1>
+			</div>
+
+			<section>
+				<div>
+					<table class="table table-striped table-hover dataTable no-footer forecasts_table">
+						<thead>
+							<tr role="row">
+								<th>Forecast</th>
+								<th>Name</th>
+								<th>Status</th>
+								<th>Year</th>
+								<th>Needed By</th>
+								<th>TE Type</th>
+								<th>Deployment Type</th>
+								<th>CPU</th>
+								<th>RAM</th>
+								<th>Storage</th>
+								<th>OPEX</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for forecast in forecasts_list %}
+							<tr class="odd">
+								<td>{{ forecast.forecast }}</td>
+								<td>{{ forecast.teName }}</td>
+								<td>{{ forecast.status }}</td>
+								<td>{{ forecast.year}}</td>
+								<td>{{ forecast.timeframeNeededBy}}</td>
+								<td>{{ forecast.teType }}</td>
+								<td>{{ forecast.deploymentType }}</td>
+								<td>{{ forecast.cpu }}</td>
+								<td>{{ forecast.ram }}</td>
+								<td>{{ forecast.storage }}</td>
+								<td>{{ forecast.opex }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			</ui-view>
+		</section>
+	</section>
+
+{% endblock content %}
+
+{% block extrascripts %}
+
+<style type="text/css">
+svg > g > g:last-child { pointer-events: none }
+</style>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+
+<script type="text/javascript">    
+    $(document).ready( function () {
+   		var tableName = '.forecasts_table';
+   		$(tableName).DataTable({
+            paging: false,
+            'responsive': true,
+            scrollY: 400,
+            "scrollX": false,
+            "scrollCollapse": true,
+            "dom": '<"'+tableName+'">frtip',
+            initComplete: function () {
+            	$('div'+tableName).css("float", "left");
+                this.api().columns([0, 2, 3, 5]).every( function () {
+                    var column = this;
+                    var headerText = column.header().textContent
+                    var select = $('<select><option value=""></option></select>')
+                        .appendTo( $('div'+tableName) )
+                        .on( 'change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex(
+                                $(this).val()
+                            );
+     
+                            column
+                                .search( val ? '^'+val+'$' : '', true, false )
+                                .draw();
+                        } );
+                    column.cells('', column[0]).render('display').sort().unique().each( function ( d, j ) {
+                        select.append( '<option value="'+d+'">'+d+'</option>' )
+                    } );
+                    select.wrap( "<label style='padding-right: 10px;'>"+headerText+": </label>" );
+                } );
+            }
+        });
+    } );
+</script>
+
+{% endblock extrascripts %}

@@ -1,0 +1,56 @@
+---
+
+- name: Update Okta Production Environment
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  vars:
+    okta_dir: "/root/okta/"
+    okta_repo: "ssh://ldtbrkvihf@gerrit.ericsson.se:29418/OSS/com.ericsson.de/okta"
+    prod_compose: "/root/okta/docker-compose.prod.yml"
+
+  tasks:
+  - name: Update Repo
+    block:
+      - name: Change Directory
+        command: "cd {{ okta_dir }}"
+      - name: Tear Down Existing Services
+        docker_compose:
+            project_src: "{{ okta_dir }}"
+            files: "{{ prod_compose }}"
+            state: absent
+            remove_orphans: yes
+      - name: Pull From Gerrit
+        git:
+          repo: "{{ okta_repo }}"
+          dest: "{{ okta_dir }}"
+          update: yes
+      - name: Restart Services
+        docker_compose:
+          project_src: "{{ okta_dir }}"
+          files: "{{ prod_compose }}"
+          state: present
+          build: yes
+      - name: Collect Facts on Most Recent Changes
+        command: "git diff HEAD HEAD^ --name-only"
+        register: diff_result
+      - name: Collect Static Files
+        command: "docker-compose exec -T web python manage.py collectstatic --no-input --clear"
+        when: "'/static/' in diff_result.stdout"
+      - name: Migrating Database Changes
+        block:
+          - name: Make Migrations Entry
+            command: "docker-compose exec -T web python manage.py makemigrations"
+          - name: Migrate DB Changes
+            command: "docker-compose exec -T web python manage.py migrate"
+        when: "'/models.py' in diff_result.stdout"
+    rescue:
+      - name: Ensure Services are Started
+        docker_compose:
+          project_src: "{{ okta_dir }}"
+          files: "{{ prod_compose }}"
+          state: present
+          build: no
+      - name: Force Failure and Stop Play
+        fail:
+          msg: "The failure of task: '{{ ansible_failed_task.name }}', has caused the Okta update to be unsuccessful."

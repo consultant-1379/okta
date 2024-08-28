@@ -1,0 +1,217 @@
+{% extends 'utils/main.html' %}
+
+{% load mathfilters %}
+{% block content %}
+	<section class="content" ng-show="!transitioning" style="">
+		<section class="container">
+			<ui-view>
+			<div class="page-header">
+				<h1>Demand Management</h1>
+			</div>
+			
+			<div class="container">
+			    <div class="row">
+			    	{% for title,requests in dm_requests.items %}
+			        <div class="four col-md-3" id="{{ title }}_counter">
+			            <div class="counter-box{% if forloop.first %} colored {% endif %}"> <i class="fa fa-thumbs-o-up"></i> <span class="counter">{{ requests.count }}</span>
+			                <p>{{ requests.title }}</p>
+			            </div>
+			        </div>
+			        {% endfor %}
+			    </div>
+			</div>
+			{% for title,requests in dm_requests.items %}
+			<section id="{{ title }}_section">
+				<div class="page-header">
+					<h2>{{ requests.title }}</h2>
+				</div>
+				
+				<div>
+					<table class="table table-striped table-condensed table-hover dataTable no-footer {{ title }}_table">
+						<thead>
+							<tr role="row">
+								<th>Ticket</th>
+								<th style="width: 250px;">Summary</th>
+								<th>Status</th>
+								<th>Reporter</th>
+								<th>Team</th>
+								<th>PDG/Area</th>
+								{% if requests.extra_columns %}
+								<th>Status Changed</th>
+								{% endif %}
+								<th>Created</th>
+								<th>Timebox</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for request in requests.requests %}
+							<tr class="odd">
+								<td data-toggle="tooltip" title="Most Recent Comment, from {{request.fields.lastCommenter}}: &#10;{{request.fields.lastComment}}"><a href="https://eteamproject.internal.ericsson.com/browse/{{ request.key }}">{{ request.key }}</a></td>
+								<td>{{ request.fields.summary }}</td>
+								<td>{{ request.fields.status.name }}</td>
+								<td>{{ request.fields.reporter.displayName }}</td>
+								<td>{{ request.fields.team }}</td>
+								<td>{{ request.fields.pdg_area.value }}</td>
+								{% if requests.extra_columns %}
+								<td>{{ request.fields.transitionDate }}</td>
+								{% endif %}
+								<td>{{ request.fields.created }}</td>
+								<td>{{ request.fields.timebox }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</section>
+			{% endfor %}
+			<section>
+				<div class="page-header">
+					<h1>Area Requests Breakdown</h1>
+				</div>
+				<div style="width: 100%; overflow: hidden;">
+					<div style="float: left;" id="area_count_chart"></div>
+					<div style="margin-left: 620px;">
+						<form id="demo-form2" class="form-horizontal form-label-left input_mask" method="get" novalidate="">
+							<label for="pdgs">Select PDG/Area:</label>
+							<select name="pdgs" id="pdgs">
+							  <option value="all">All</option>
+							{% for area,count in area_count.items %}
+						      <option value="{{area}}">{{area}}</option>
+						    {% endfor %}
+							</select>
+							<button type="submit" class="btn btn-success" formaction="/demand-management-excel-report">Generate Report</button>
+						</form>
+					</div>
+				</div>
+			</section>
+			</ui-view>
+		</section>
+	</section>
+
+{% endblock content %}
+
+{% block extrascripts %}
+
+<style type="text/css">
+
+.counter-box {
+    display: block;
+    background: #f6f6f6;
+    padding: 20px 20px 20px;
+    text-align: center
+}
+
+.counter-box p {
+    margin: 5px 0 0;
+    padding: 0;
+    color: #909090;
+    font-size: 18px;
+    font-weight: 500
+}
+
+.counter-box i {
+    font-size: 60px;
+    margin: 0 0 15px;
+    color: #d2d2d2
+}
+
+.counter {
+    display: block;
+    font-size: 32px;
+    font-weight: 700;
+    color: #666;
+    line-height: 28px
+}
+
+.counter-box.colored {
+    background: #ddd
+}
+
+svg > g > g:last-child { pointer-events: none }
+
+</style>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript">
+	google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+		// Create the data table.
+	    var data = new google.visualization.DataTable();
+	    data.addColumn('string', 'Deployment Type');
+	    data.addColumn('number', 'Count');
+	    data.addRows([
+	    {% for area,count in area_count.items %}
+	      ['{{ area }}', {{ count }}],
+	    {% endfor %}
+	    ]);
+		
+	    var options = { backgroundColor: 'transparent',
+	    				'chartArea': {'width': '100%', 'height': '100%'},
+	                    is3D: false,};
+	    
+	    var chart = new google.visualization.PieChart(document.getElementById('area_count_chart'));
+	    chart.draw(data, options);
+	}
+    
+    $(document).ready( function () {
+    	{% for title,requests in dm_requests.items %}
+    		var tableName = '.{{ title }}_table';
+    		$(tableName).DataTable({
+	            paging: false,
+	            'responsive': true,
+	            scrollY: 400,
+	            "scrollCollapse": true,
+	            "dom": '<"'+tableName+'">frtip',
+	            initComplete: function () {
+	            	$('div'+tableName).css("float", "left");
+	                this.api().columns([2, 4, 5]).every( function () {
+	                    var column = this;
+	                    var headerText = column.header().textContent
+	                    var select = $('<select><option value=""></option></select>')
+	                        .appendTo( $('div'+tableName) )
+	                        .on( 'change', function () {
+	                            var val = $.fn.dataTable.util.escapeRegex(
+	                                $(this).val()
+	                            );
+	     
+	                            column
+	                                .search( val ? '^'+val+'$' : '', true, false )
+	                                .draw();
+	                        } );
+	                    column.cells('', column[0]).render('display').sort().unique().each( function ( d, j ) {
+	                        select.append( '<option value="'+d+'">'+d+'</option>' )
+	                    } );
+	                    select.wrap( "<label style='padding-right: 10px;'>"+headerText+": </label>" );
+	                } );
+	            }
+	        });
+    		
+    		{% if not forloop.first %} 
+    			$("#{{ title }}_section").toggle();
+			{% endif %}
+    		
+    		$("#{{ title }}_counter").click(function(){
+    			$("#{{ title }}_counter").children().first().toggleClass("colored");
+    	        $("#{{ title }}_section").toggle();
+    		});
+	    {% endfor %}
+	    
+	    $('.counter').each(function () {
+	    	$(this).prop('Counter',0).animate({
+		    		Counter: $(this).text()
+		    	}, {
+			    	duration: 2000,
+			    	easing: 'swing',
+			    	step: function (now) {
+			    		$(this).text(Math.ceil(now));
+		    	}
+	    	});
+	    });
+    } );
+</script>
+
+{% endblock extrascripts %}

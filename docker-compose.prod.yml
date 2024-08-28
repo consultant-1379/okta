@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=okta_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=stackcentric123!
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./postgres/:/var/lib/postgresql/data/"
+  web:
+    build: .
+    command: gunicorn okta.wsgi:application --bind 0.0.0.0:8000
+    expose:
+      - 8000
+    depends_on:
+      - db
+    volumes:
+      - ./static_volume:/code/staticfiles
+  nginx: 
+    build : ./nginx
+    ports :
+       - 80:80
+       - 443:443
+    depends_on: 
+       - web
+    volumes: 
+       - ./static_volume:/code/staticfiles
+       - ./certs:/etc/nginx/certs

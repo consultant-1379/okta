@@ -1,0 +1,147 @@
+{% extends 'utils/main.html' %}
+
+{% load mathfilters %}
+{% load cloud_stats_tags %}
+{% block content %}
+	<div class="modal fade" tabindex="-1" role="dialog" id="modal" style="z-index:10000">
+	  <div class="modal-dialog" role="document">
+	    <div class="modal-content"></div>
+	  </div>
+	</div>
+	<section class="content" ng-show="!transitioning" style="">
+		<section class="container">
+			<ui-view>
+			<section>
+				<div class="page-header">
+					<h1>Clouds Overview</h1>
+				</div>
+				<div>	
+					<table class="table table-striped table-condensed table-hover dataTable no-footer">
+						<thead>
+							<tr>
+								<th>Cloud</th>
+								<th>Version</th>
+								<th>Health Status</th>
+								<!--
+								<th>CPU</th>
+								<th>RAM</th>
+								<th>Storage</th>
+								-->
+								<th>No. of Hosts</th>
+								<th>Tot. Rem. CPU</th>
+								<th>Tot. Rem. RAM</th>
+								<th>Avg Rem. CPU Per Host</th>
+								<th>Avg Rem. RAM Per Host</th>
+								<th>Volumes Used</th>
+								<th>Provisioning</th>
+								<th>IP's</th>
+								<!--
+								<th>Ext.NFS</th>
+								-->
+							</tr>
+						</thead>
+						<tbody>
+							{% for cloud in clouds %} {% if not cloud.shared_cloud %}
+							<tr>
+								<td>{{ cloud.cloud_name }}</td>
+								<td>{% if not cloud.openstack_version %} - {% else %} {{ cloud.openstack_version }} {% endif %}</td>
+								<td>{% if cloud.cloud_status == "OK" %} <span class="glyphicon glyphicon-ok-sign" style="color:green"></span> {% elif cloud.cloud_status == "Warning" %} <span class="glyphicon glyphicon-remove-sign" style="color:red"></span> {% else %} <span class="glyphicon glyphicon-minus-sign"></span> {% endif %}</td>
+								<!--
+								<td>{{ cloud.cpu }} / {{ cloud.total_cpu }}</td>
+								<td>{{ cloud.ram|intdiv:1000 }} / {{ cloud.total_ram|intdiv:1000 }}</td> 
+								<td>{{ cloud.cinder_storage }} / {{ cloud.total_cinder_storage }}</td>
+								
+								<li>Disabled Hosts: {{ cloud.num_disabled_compute_nodes }}</li>
+								<li>CPU Cont. Ratio: {{ cloud.cpu_ratio }}</li>
+								<li>RAM Cont. Ratio: {{ cloud.ram_ratio }}</li>
+								-->
+								<td>{{ cloud.hosts_info.hosts_count }}</td>
+								<td>{{ cloud.hosts_info.total_remaining_cpu }}</td>
+								<td>{{ cloud.hosts_info.total_remaining_ram }}</td>
+								<td>{{ cloud.hosts_info.avg_remaining_cpu }}</td>
+								<td>{{ cloud.hosts_info.avg_remaining_ram }}</td>
+								<td>
+								{% with cloud_data=cloud_capacity_data.cloud_info.redhat|get_item:cloud.cloud_name|get_item:cloud.cloud_name %}
+								{{ cloud_data.total_volumes_used }} / {{ cloud_data.max_cloud_volume }}
+								{% endwith %}
+								</td>
+								<td>{% if cloud.thick_provisioning %} Thick {% else %} Thin {% endif %}</td>
+								<td>-</td>
+							</tr>
+							{% endif %} {% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</section>
+			
+			<section>
+				<div class="page-header">
+					<h1>Potential Clouds</h1>
+				</div>
+				<a id="create-potential-cloud" type="button" name="create-potential-cloud" class="btn btn-sm btn-success" href="{% url 'cloudoverview:create-potential-cloud' %}">Create New Provisional Cloud</a>
+				<div>
+					<table class="table table-striped table-condensed table-hover dataTable no-footer">
+						<thead>
+							<tr>
+								<th>Cloud</th>
+								<th>Version</th>
+								<th>CPU</th>
+								<th>RAM</th>
+								<th>Storage</th>
+								<th>No. of Hosts</th>
+								<th>Provisioning</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+							
+						<tbody>
+							{% for cloud in potential_clouds %}
+							<tr>
+								<td>{{ cloud.cloud_name }}</td>
+								<td>{{ cloud.version }}</td>
+								<td>{{ cloud.total_cpu }}</td>
+								<td>{{ cloud.total_ram }}</td> 
+								<td>{{ cloud.storage }}</td>
+								<td>{{ cloud.number_of_hosts }}</td>
+								<td>{{ cloud.provisioning }}</td>
+								<td>
+									<a type="button" id="edit-button-{{cloud.id}}" class="edit-button btn btn-sm btn-primary" data-toggle="modal" data-target="#cloud-edit" href="{% url 'cloudoverview:edit-potential-cloud-modal' %}?id={{cloud.id}}">Edit</a>&nbsp;
+									<a type="button" class="delete-button-{{cloud.id}} btn btn-sm btn-danger" href="{% url 'cloudoverview:delete-potential-cloud' %}?id={{cloud.id}}">Delete</a>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</section>
+			</ui-view>
+		</section>
+	</section>
+
+
+<!-- Cloud edit modal -->
+<div class="modal fade" id="cloud-edit" role="dialog" style="z-index:10000">
+  <div class="modal-dialog">
+	<!-- Modal content-->
+	<div class="modal-content">
+	</div>
+  </div>
+</div>
+<!-- end cloud edit modal -->
+
+{% endblock content %}
+
+{% block extrascripts %}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/jquery.dataTables.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<style type="text/css">
+svg > g > g:last-child { pointer-events: none }
+</style>
+
+<script type="text/javascript">
+
+</script>
+
+{% endblock extrascripts %}

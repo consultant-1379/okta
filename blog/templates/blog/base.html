@@ -1,0 +1,115 @@
+{%load static%}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Django3 Blog App</title>
+    <link rel="stylesheet" href="{% static 'blog/style.css' %}">
+  </head>
+  <body class ng-controller="HeaderController">
+    <header header-view class="navbar navbar-fixed-top navbar-inverse" ng-show="navbarActive">
+	<div class="container" ng-controller="HeaderController as vm">
+	 <div class="navbar-header">
+	  <button id="navbar-toggle" class="navbar-toggle" type="button" ng-click="vm.navbarToggle()">
+	   <span class="sr-only">Toggle navigation</span>
+	   <span class="icon-bar"></span>
+	   <span class="icon-bar"></span>
+           <span class="icon-bar"></span>
+          </button>
+	  <a us-sref="home" class="navbar-brand" href="/">
+		OKTA
+	  </a>
+	</div>
+	<nav class="navbar-collapse collapse" uib-collapse="!vm.isCollapsed" role="navigation" style="height: 0px;">
+	<ul class="nav navbar-nav" ng-if="vm.menu.shouldRender(vm.authetication.user);">
+	<li ng-repeat="item in vm.menu.items | orderBy: 'position'" ng-if="item.shouldRender(vm.authetication.user);" ng-switch="item.type" ng-class="{ dropdown: item.type === 'dropdown' }" ui-sref-active="active" class uib-dropdown="item.type === 'dropdown'">
+	<a ng-switch-default ui-sref="cloudbreakdown" ng-click="vm.navbarToggle()" ng-bind="item.title" href="/cloudbreakdown">Cloud Breakdown</a>
+        <li ng-repeat="item in vm.menu.items | orderBy: 'position'" ng-if="item.shouldRender(vm.authetication.user);" ng-switch="item.type" ng-class="{ dropdown: item.type === 'dropdown' }" ui-sref-active="active" class uib-dropdown="item.type === 'dropdown'">
+        <a ng-switch-default ui-sref="Demand Management Overview" ng-click="vm.navbarToggle()" ng-bind="item.title" href="/demandmanagementoverview">Demand Management Overview</a>
+	<li ng-repeat="item in vm.menu.items | orderBy: 'position'" ng-if="item.shouldRender(vm.authetication.user);" ng-switch="item.type" ng-class="{ dropdown: item.type === 'dropdown' }" ui-sref-active="active" class uib-dropdown="item.type === 'dropdown'">
+        <a ng-switch-default ui-sref="Cloud Planner" ng-click="vm.navbarToggle()" ng-bind="item.title" href="/cloudplanner">Cloud Planner</a>
+	</ul>
+	<ul class="nav navbar-nav navbar-right">
+	<li>
+	<a date-toggle="tooltip" title="Version" ng-href="" target="_blank" href="">
+	<span ng_bind="vm.version">1.0.1</span>
+	</a>
+	</li>
+	<li>
+	<div class="ebSystemBarComponent-body"></div>
+	</li>
+	<li date-toggle="tooltip" title="Login" ng-hide="vm.authentication.user" class="ebIcon ebIcon_login ng-hide" ui-sref="authentication.signin" style="cursor: pointer" href="/authentication/signin">
+	</li>
+	<li uib-dropdown ng-show="vm.authentication.user" style="cursor: pointer;" class="dropdown">
+	<a id="user-username" class="dropdown-toggle" uib-dropdown-toggle aria-haspopup="true" aria-expanded="false">
+	<span ng_bind="vm.authentication.user.displayName">Alan Kennedy</span>
+	</a>
+	</li>
+	<li>
+        <div class="ebSystemBarComponent-body"></div>
+        </li>
+	<li uib-dropdown style="cursor: pointer" class="dropdown">
+	<a class="dropdown-toggle" uib-dropdown-toggle aria-haspopup="true" aria-expanded="false">
+	<span class="ebIcon ebIcon_help"></span>
+	Help
+	<b class="caret"></b>
+	</a>	
+	<ul class="dropdown-menu" role="menu">
+	<li>
+	<a href="/helpdocs" target="_blank">Help Documentation</a>
+	</li>
+	<li>
+        <a href="/apidocs" target="_blank">Api Documentation</a>
+        </li>
+	</ul>
+	</li>
+	</ul>
+	</nav>
+	</div>
+	</header>
+	<section class="content" ng-show="!transitioning" style>
+	<section class="container">
+	<section ui-view class style>
+	<section>
+	<div class="home-page-welcome">
+	<h1> Welcome to OKTA</h1>
+	</div>
+	<br>
+	</section>
+	</section>
+	</section>
+	</section>
+	<br>
+	<div class="eaLogin">
+	 <div class="eaLogin-inner">
+	  <div class="eaLogin-ericssonLogo"></div>
+	   <div class="eaLogin-body eaLogin-login" style="disaply; block;">
+	    <div class="eaLoginTitle">OKTA original</div>
+	    <form name=vm.userForm" ng-submit="vm.signin()" ng-class="{ 'has-error': vm.userForm.username.$invalid || vm.userForm.password.$invalid, 'has-success': vm.userForm.username.$valid && vm.userForm.password.$valid}}" novalidate autocomplete="off" class="ng-dirty ng-valid-parse" ng-valid ng-valid-required has success style>
+	     <div class="eaLogin-inputWrap">
+	      <input type="text" id="username" name="username" class="ebInput eb_wMargin eaLogin-loginUsername ng-not-empty ng-dirty ng-valid-parse ng-valid ng-valid-required ng-touched" ng-model="vm.credentials.username" placeholder="Username" lowercase required style="text-transform: lowercase;">
+              <input type="password" id="password" name="password" class="ebInput eb_wMargin eaLogin-loginPassword ng-not-empty ng-dirty ng-valid-parse ng-valid ng-valid-required ng-touched" ng-model="vm.credentials.password" placeholder="Password" required style>
+	      <button type="submit" class="ebBtn eaLogin-formButton" ng-disabled="!vm.userForm.$valid">
+	      <i class="ebIcon ebIcon_rightArrow"></i>
+	      </button>
+	      <span class="help-block ng-inactive" ng-messages="vm.userForm.$dirty && vm.userForm.$error" style>
+	      </span>
+	      </div>
+	      </form>
+	     </div>
+	     <p class="eaLogin-copy"><span>&#169;</span> Ericsson Enterprise AB, 2021. All rights reserved.</p>
+	  </div>
+	 </div>
+	</div> 
+	<!--
+	<div id="content">
+        {% block content%}
+        {% endblock content%}
+      </div>
+      <div id="sidebar">
+        <h2>My Blog</h2>
+        <p>This is my blog.</p>
+      </div>-->
+  </body>
+</html>

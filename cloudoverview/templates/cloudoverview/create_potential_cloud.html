@@ -1,0 +1,37 @@
+{% extends 'utils/main.html' %} {% block content %}
+
+<section class="content" style>
+<section class="container">
+	<section ui-view="" class="" style="">
+		<ui-view class="" style="">
+		<section>
+			<div class="page-header">
+				<h1>Creating Potential Cloud</h1>
+			</div>
+			<div class="container">
+				<form method="post" action="">
+					{% csrf_token %}
+						{% for field in form %}
+						<div class="form-group{% if field.errors %} invalid{% endif %}">
+							<label for="{{ field.id_for_label }}">{{ field.label }}</label> 
+							{{field }} 
+							{% for error in field.errors %}
+							<p class="help-block">{{ error }}</p>
+							{% endfor %}
+						</div>
+						{% endfor %}
+				
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary">Create</button>
+					</div>
+				</form>
+			</div>
+		</section>
+		</ui-view>
+	</section>
+
+</section>
+</section>
+
+{% endblock content %}

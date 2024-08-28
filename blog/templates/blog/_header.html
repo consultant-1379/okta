@@ -1,0 +1,76 @@
+{% load static %}
+
+<!-- Header -->
+<header header-view class="navbar navbar-fixed-top navbar-inverse"
+	ng-show="navbarActive">
+	<div class="container" ng-controller="HeaderController as vm">
+		<div class="navbar-header">
+			<button id="navbar-toggle" class="navbar-toggle" type="button"
+				ng-click="vm.navbarToggle()">
+				<span class="sr-only">Toggle navigation</span> <span
+					class="icon-bar"></span> <span class="icon-bar"></span> <span
+					class="icon-bar"></span>
+			</button>
+			<a us-sref="home" class="navbar-brand" href="/"> OKTA </a>
+		</div>
+		<nav class="navbar-collapse collapse" uib-collapse="!vm.isCollapsed"
+			role="navigation" style="height: 0px;">
+			<ul class="nav navbar-nav"
+				ng-if="vm.menu.shouldRender(vm.authetication.user);">
+				<li ng-repeat="item in vm.menu.items | orderBy: 'position'"
+					ng-if="item.shouldRender(vm.authetication.user);"
+					ng-switch="item.type"
+					ng-class="{ dropdown: item.type === 'dropdown' }"
+					ui-sref-active="active" class
+					uib-dropdown="item.type === 'dropdown'"><a ng-switch-default
+					ui-sref="cloudbreakdown" ng-click="vm.navbarToggle()"
+					ng-bind="item.title" href="/cloudbreakdown">Clouds Overview</a>
+				<li ng-repeat="item in vm.menu.items | orderBy: 'position'"
+					ng-if="item.shouldRender(vm.authetication.user);"
+					ng-switch="item.type"
+					ng-class="{ dropdown: item.type === 'dropdown' }"
+					ui-sref-active="active" class
+					uib-dropdown="item.type === 'dropdown'"><a ng-switch-default
+					ui-sref="Demand Management Overview" ng-click="vm.navbarToggle()"
+					ng-bind="item.title" href="/demandmanagementoverview">Demand
+						Management Overview</a>
+				<li ng-repeat="item in vm.menu.items | orderBy: 'position'"
+					ng-if="item.shouldRender(vm.authetication.user);"
+					ng-switch="item.type"
+					ng-class="{ dropdown: item.type === 'dropdown' }"
+					ui-sref-active="active" class
+					uib-dropdown="item.type === 'dropdown'"><a ng-switch-default
+					ui-sref="Cloud Planner" ng-click="vm.navbarToggle()"
+					ng-bind="item.title" href="/cloudplanner">Cloud Planner</a>
+			</ul>
+			<ul class="nav navbar-nav navbar-right">
+				<li><a date-toggle="tooltip" title="Version" target="_blank"
+					href=""> <span>1.0.1</span>
+				</a></li>
+				<li>
+					<div class="ebSystemBarComponent-body"></div>
+				</li> {% if request.user.is_authenticated %}
+				<li uib-dropdown style="cursor: pointer;" class="dropdown open">
+					<a id="user-username" class="dropdown-toggle"
+					data-toggle="dropdown" uib-dropdown-toggle aria-haspopup="true"
+					aria-expanded="true"> <span class="ldap-username">{{ request.user.username }}</span>
+				</a>
+				</li> {% endif %}
+				<li>
+					<div class="ebSystemBarComponent-body"></div>
+				</li>
+				<li uib-dropdown style="cursor: pointer" class="dropdown"><a
+					class="dropdown-toggle" uib-dropdown-toggle aria-haspopup="true"
+					aria-expanded="false"> <span class="ebIcon ebIcon_help"></span>
+						Help <b class="caret"></b>
+				</a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a href="/helpdocs" target="_blank">Help Documentation</a></li>
+						<li><a href="/apidocs" target="_blank">API Documentation</a></li>
+					</ul>
+				</li>
+			</ul>
+		</nav>
+	</div>
+</header>
+<!-- End Header -->

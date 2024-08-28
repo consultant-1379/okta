@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Fav Icon-->
+	<link href="/static/blog/img/favicon.ico" rel="icon" type="image/x-icon">
+    <title>OKTA</title>
+
+
+    <!-- Bootstrap -->
+    <link href="{% static "gentelella/vendors/bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="{% static "gentelella/vendors/font-awesome/css/font-awesome.min.css" %}" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="{% static "gentelella/vendors/nprogress/nprogress.css" %}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="{% static "gentelella/vendors/animate.css/animate.css" %}" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="{% static "gentelella/build/css/custom.min.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static '/blog/style.css' %}">
+  </head>
+  
+  <body class>
+    <header header-view class="navbar navbar-fixed-top navbar-inverse">
+        <div class="container">
+         <div class="navbar-header">
+          <button id="navbar-toggle" class="navbar-toggle" type="button">
+           <span class="sr-only">Toggle navigation</span>
+           <span class="icon-bar"></span>
+           <span class="icon-bar"></span>
+           <span class="icon-bar"></span>
+          </button>
+          <a ui-sref="home" class="navbar-brand" href="/"> 
+                OKTA
+          </a>
+        </div>
+        <nav class="navbar-collapse collapse" uib-collapse="!vm.isCollapsed" role="navigation" style="height: 0px;">
+        {% if request.user.is_authenticated %}
+        <ul class="nav navbar-nav">
+        <li>
+        <a ui-sref="cloudbreakdown" href="/cloudbreakdown">Cloud Breakdown</a>
+        <li>
+        <a ui-sref="Demand Management Overview"href="/demandmanagementoverview">Demand Management Overview</a>
+        <li>
+        <a ui-sref="Resource Accommodator" "href="/resource-accommodator">Resource Accommodator</a>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+        <li>
+        <a date-toggle="tooltip" title="Version" target="_blank" href="">
+        <span>1.0.1</span>
+        </a>
+        </li>
+        <li>
+        <div class="ebSystemBarComponent-body"></div>
+        </li>
+        <li uib-dropdown style="cursor: pointer;" class="dropdown">
+        <a id="user-username" class="dropdown-toggle" uib-dropdown-toggle aria-haspopup="true" aria-expanded="false">
+        <span>Login</span>
+        </a>
+        </li>
+        <li>
+        <div class="ebSystemBarComponent-body"></div>
+        </li>
+        <li uib-dropdown style="cursor: pointer" class="dropdown">
+        <a class="dropdown-toggle" uib-dropdown-toggle aria-haspopup="true" aria-expanded="false">
+        <span class="ebIcon ebIcon_help"></span>
+        Help
+        <b class="caret"></b>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+        <li>
+        <a href="/helpdocs" target="_blank">Help Documentation</a>
+        </li>
+        <li>
+        <a href="/apidocs" target="_blank">Api Documentation</a>
+        </li>
+        </ul>
+        </li>
+        </ul>
+        {% endif %}
+        </nav>
+        </div>
+        </header>
+        
+        <section class="content" ng-show="!transitioning" style>
+        <section class="container">
+        <section ui-view class style>
+        <section>
+        <div class="home-page-welcome">
+        <h1> Welcome to OKTA</h1>
+        </div>
+        <br>
+        </section>
+        </section>
+        </section>
+        </section>
+        <br>
+        <div class="eaLogin">
+         <div class="eaLogin-inner">
+          <div class="eaLogin-ericssonLogo"></div>
+           <div class="eaLogin-body eaLogin-login" style="display; block;">
+            <div class="eaLoginTitle">OKTA</div>
+               <form  action="{% url 'blog:user-auth' %}" method="post">
+                <div class="eaLogin-inputWrap">
+              <input type="text" id="username" name="username" class="ebInput eb_wMargin eaLogin-loginUsername" placeholder="username" required="" />
+              <input type="password" id="password" name="password" class="ebInput eb_wMargin eaLogin-loginUsername" placeholder="password" required="" />
+              <input type="hidden" value={{next}} name="next" />
+              <button type="submit" class="ebBtn eaLogin-formButton">
+              <i class="ebIcon ebIcon_rightArrow"></i>
+              </button>
+              </div>
+              <!--{% if result %}
+                <div class="ui-notification error clickable" style="bottom: 20px; right: 10px;">
+                  <i class="glyphicon glyphicon-remove"></i>
+                  <div class="message">{{result}}</div>
+                </div>
+              {% endif %}
+              <br>-->
+
+              </form>
+             </div>
+             <p class="eaLogin-copy"><span>&#169;</span> Ericsson Enterprise AB, 2021. All rights reserved.</p>
+          </div>
+         </div>
+
+                {% if result %}
+                <div class="ui-notification error clickable" style="bottom: 20px; right: 10px;">
+                  <i class="glyphicon glyphicon-remove"></i>
+                  <div class="message">{{result}}</div>
+                </div>
+              {% endif %}
+
+  </body>
+
+</html>
+
+
